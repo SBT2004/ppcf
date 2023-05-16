@@ -128,14 +128,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Atom.h" />
+    <ClInclude Include="atom.h" />
     <ClInclude Include="box.h" />
-    <ClInclude Include="ppcf.h" />
+    <ClInclude Include="control_panel.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Atom.cpp" />
+    <ClCompile Include="atom.cpp" />
     <ClCompile Include="box.cpp" />
-    <ClCompile Include="ppcf.cpp" />
+    <ClCompile Include="control_panel.cpp" />
+    <ClCompile Include="main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
