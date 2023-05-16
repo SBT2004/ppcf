@@ -15,6 +15,8 @@ box::box(const std::string& path) : time_(NAN), frame_number_(NAN) {
 	//CRYST1   22.758   22.758   22.758  90.00  90.00  90.00 P 1           1
 	std::regex reg_dim(R"(^\w+\s+(\d*\.\d+)\s+(\d*\.\d+)\s+(\d*\.\d+))");
 
+	//ezen érdemes elgondolokdni
+	//If n == 0, returns a reference to the std::sub_match representing the part of the target sequence matched by the entire matched regular expression.
 	if (file.is_open()) {
 		std::string line;
 		std::smatch matches;

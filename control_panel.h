@@ -5,6 +5,7 @@
 #include <regex>
 #include "box.h"
 // a config file tartalma
+enum { end };
 class analyis_config {
 public:
 	std::string path;
@@ -13,59 +14,84 @@ public:
 	//ide majd lesz egy end enum/logikai érték
 	size_t from = 0, to = INT_MAX;
 	double dr = 0.01;
-	std::string output_file_name = "output";
 	size_t increment = 1;
-	analyis_config() :path(nullptr), prefix(nullptr) {
-		read_cfg_file();
-	}
+	std::string output_file_name = "output";
+
+	//ha read_cfg beolvassa az értéket, akkor truek lesznek
+	bool path_modified = false;
+	bool prefix_modified = false;
+	bool from_modified = false;
+	bool to_modified = false;
+	bool dr_modified = false;
+	bool increment_modified = false;
+	bool output_name_modified = false;
+	//ez akkor lesz true, ha a configban to értéknek end van megadva
+	bool to_end_flag = false;
+
+
+	analyis_config() { read_cfg_file(); }
+
 	void read_cfg_file();
+
 };
 
 class control_panel
 {
-	//amit sikerül beolvasni a config.txt-ből felhasználja a többit bekéri runtime
+	//amit sikerül beolvasni a config.txt-ből felhasználja, a többit bekéri runtime
 	//ha nem sikerült beolvasni rákérdez, hogy használja-e a default value-t, amit ki is ír hogy mi az
 	analyis_config generate_configuration() {
 		namespace fs = std::filesystem;
 
 		analyis_config conf;
 
-		//ha nincs megadva, be lehetne olvasni
-		std::cout << "Specify the prefix of the files";
-		std::string prefix;
-		std::cin >> prefix;
-		conf.prefix = prefix;
+		if (!conf.prefix_modified) {
+			std::cout << "Specify the prefix of the files";
+			std::string prefix;
+			std::cin >> prefix;
+			conf.prefix = prefix;
+		}
+		if (!conf.path_modified) {
+			std::cout << "Specify the path of the files";
+			std::string path;
+			std::cin >> path;
+			conf.path = path;
+		}
 
-		const std::string path = R"(D:\MD\ppcf_frame_test)";
-		conf.path = path;
-
-		//ezt nem kérjük be, de a to értékkel túl lehet menni
+		//ezt nem kérjük be
 		size_t file_count = 0;
-		for (const auto& file : fs::directory_iterator(path)) {
+		for (const auto& file : fs::directory_iterator(conf.path)) {
 			if (is_regular_file(file)) {
 				file_count++;
 			}
 		}
 		conf.number_of_files = file_count;
 
-		size_t from, to;
-		std::cout << "Specify which files to analyze";
-		std::cin >> conf.from >> conf.to;
+		//TODO itt egybe kéne from-to beolvasás cinről
+		if (!conf.from_modified) {
+			size_t from;
+			std::cout << "Specify which files to analyze";
+			std::cin >> conf.from;
+		}
 
-		//ötlet config class, config.dr_given method
-		double dr;
-		std::cout << "Specify the step size dr";
-		std::cin >> dr;
-		conf.dr = dr;
+		if (!conf.dr_modified) {
+			double dr;
+			std::cout << "Specify the step size dr";
+			std::cin >> dr;
+			conf.dr = dr;
+		}
 
-		std::vector<std::vector<double>>average_ppcf;
-		std::string output_file_name = prefix;
-
-
+		if (!conf.path_modified) {
+			std::string output_file_name;
+			std::cout << "Specify the name of the output file";
+			std::cin >> output_file_name;
+			conf.output_file_name = output_file_name;
+		}
 		return conf;
 	}
-	void initiate_analysis(const analyis_config conf) const {
-		for (size_t i = conf.from; i <= conf.to; i++) {
+
+	void initiate_analysis(const analyis_config& conf) const {
+		//TODO nem 1 increment esetén ne menjen túl
+		for (size_t i = conf.from; i <= conf.to; i += conf.increment) {
 			auto output_name = conf.output_file_name;
 			output_name += std::to_string(i);
 			output_name += ".pdb";
