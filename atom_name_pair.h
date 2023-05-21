@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include <string>
 
-//ppcf_values számításhoz egy központi atomot és egy referencia atomot tároló struct
+//ppcf_value_pair számításhoz egy központi atomot és egy referencia atomot tároló struct
 	struct atom_name_pair {
 		std::string center;
 		std::string reference;

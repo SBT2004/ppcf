@@ -12,9 +12,10 @@ void config_reader::read_cfg_file() {
 			try_parse_dr();
 			try_parse_increment();
 			try_parse_output_name();
-			file.close();
 		}
+		file.close();
 	}
+
 	else {
 		throw std::invalid_argument("Failed to open config file");
 	}
@@ -44,7 +45,7 @@ void config_reader::try_parse_from_to() {
 			from = std::stoi(matches[1].str());
 			from_modified = true;
 		}
-		else if (std::regex_match(line, matches, to_regex)) {
+		if (std::regex_match(line, matches, to_regex)) {
 			if (is_integer(matches[1])) {
 				to = std::stoi(matches[1].str());
 			}

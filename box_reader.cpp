@@ -8,7 +8,6 @@
 #include "dimensions.h"
 
 box box_reader::read_from_file() const {
-	std::ifstream file(path_);
 
 	//ATOM      1  OW  SOL     1      21.650   1.220   1.310  1.00  0.00           O
 	std::regex reg_atom(R"(^ATOM\s+\d+\s+(\w+)\s+\w+\s+\d+\s+(\d*\.\d+)\s+(\d*\.\d+)\s+(\d*\.\d+))");
@@ -18,6 +17,8 @@ box box_reader::read_from_file() const {
 
 	//CRYST1   22.758   22.758   22.758  90.00  90.00  90.00 P 1           1
 	std::regex reg_dim(R"(^\w+\s+(\d*\.\d+)\s+(\d*\.\d+)\s+(\d*\.\d+))");
+
+	std::ifstream file(path_);
 
 	if (file.is_open()) {
 		std::unordered_map<std::string, std::vector<atom>> atoms;
@@ -29,20 +30,20 @@ box box_reader::read_from_file() const {
 		std::smatch matches;
 		while (std::getline(file, line)) {
 			if (std::regex_search(line, matches, reg_atom)) {
-				atoms[std::string(matches[0])].push_back(atom(stod(matches[1]), stod(matches[2]), stod(matches[3])));
+				atoms[std::string(matches[1])].push_back(atom(stod(matches[2]), stod(matches[3]), stod(matches[4])));
 			}
 			else if (std::regex_search(line, matches, reg_frame)) {
-				time = std::stoi(matches[0]);
-				frame_number = std::stoi(matches[1]);
+				time = std::stoi(matches[1]);
+				frame_number = std::stoi(matches[2]);
 			}
 			else if (std::regex_search(line, matches, reg_dim)) {
-				dim = dimensions(stod(matches[0]), stod(matches[1]), stod(matches[2]));
+				dim = dimensions(stod(matches[1]), stod(matches[2]), stod(matches[3]));
 			}
 		}
 		file.close();
 
 		if (atoms.empty() || time == INT_MAX || frame_number == INT_MAX) {
-			throw std::invalid_argument("Invalid file");
+			throw std::invalid_argument("Invalid file content");
 		}
 		return box(atoms, dim, time, frame_number);
 	}

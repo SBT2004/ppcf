@@ -1,10 +1,11 @@
-#include "atom.h"
-#include "box.h"
-#include <filesystem>
+
+#include <iostream>
+
+#include "control_panel.h"
 
 
 int main() {
-
-	std::vector<std::vector<double>>average_ppcf;
-
+	const control_panel cp;
+	cp.initiate_analysis();
+	std::cout << "Analysis complete" << std::endl;
 }

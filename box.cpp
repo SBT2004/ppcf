@@ -1,4 +1,8 @@
 ﻿#include "box.h"
+
+#include <algorithm>
+#include <iostream>
+
 std::vector<double> box::get_distances(const atom& a, const std::string& type2) {
 	std::vector<double> distances;
 	distances.reserve(atoms_[type2].size());
@@ -13,15 +17,13 @@ std::vector<double> box::get_distances(const atom& a, const std::string& type2) 
 	return distances;
 }
 
-std::vector<ppcf_values> box::calculate_ppcf_single_atom(const atom& a, double const dr, const std::string& type2) {
+std::vector<double> box::calculate_gr_single_atom(const atom& a, double const dr, const std::string& type2) {
 
 	auto distances = get_distances(a, type2);
-	std::vector<ppcf_values>res;
-	const double max_r = dim_.x / 2;
-
-	for (double r = dr; r < max_r; r += dr) {
-		ppcf_values rgr;
-		rgr.r = r;
+	std::vector<double>res;
+	const double average_number_density = static_cast<double>(atoms_[type2].size()) / box_volume_;
+	for (double r = 0; r < r_max_; r += dr) {
+		double gr;
 
 		//distances rendezve tárolja center távolságokat
 		const auto lower = std::lower_bound(distances.begin(), distances.end(), r);
@@ -30,55 +32,49 @@ std::vector<ppcf_values> box::calculate_ppcf_single_atom(const atom& a, double c
 
 		const double dV = volume(r + dr) - volume(r);
 
-		rgr.gr = (static_cast<double>(count) / dV) / average_number_density_;
-		res.push_back(rgr);
+		gr = (static_cast<double>(count) / dV) / average_number_density;
+		res.push_back(gr);
 	}
 	return res;
 }
 
-std::vector<ppcf_values> box::calculate_ppcf(double const dr, const atom_name_pair& pair) {
+std::vector<double> box::calculate_gr(double const dr, const atom_name_pair& pair) {
 	const std::vector<atom>refs = atoms_[pair.reference];
-	std::vector<ppcf_values> average_ppcf;
-	average_ppcf.reserve(refs.size());
-
+	std::vector<double> average_gr;
+	bool first = true;
 	for (const atom& i : refs) {
-		std::vector<ppcf_values>atom_ppcf = calculate_ppcf_single_atom(i, dr, pair.reference);
-		std::transform(average_ppcf.begin(), average_ppcf.end(),
-			atom_ppcf.begin(), average_ppcf.begin(), [](ppcf_values a, const ppcf_values b) {
-				a.gr += b.gr;
-				return a;
+		std::vector<double>atom_ppcf = calculate_gr_single_atom(i, dr, pair.reference);
+		if(first) {
+			average_gr = atom_ppcf;
+			first = false;
+		}
+		std::transform(average_gr.begin(), average_gr.end(),
+			atom_ppcf.begin(), average_gr.begin(), [](const double a, const double b) {
+				return a + b;
 			});
 	}
-
-	std::transform(average_ppcf.begin(), average_ppcf.end(), average_ppcf.begin(), [&refs](ppcf_values a) {
-		a.gr /= static_cast<double>(refs.size());
-		return a;
+	std::transform(average_gr.begin(), average_gr.end(), average_gr.begin(), [&refs](double a) {
+		return a /= static_cast<double>(refs.size());
 		});
-	return average_ppcf;
+	return average_gr;
 }
 
 std::vector<std::vector<double>> box::ppcf_matrix(const double dr) {
 
 	std::vector<std::vector<double>> result;
-	for (const std::vector<atom_name_pair>pairs = ppcf_combinations(); const auto & current_pair:pairs) {
+	for (const auto pairs = ppcf_combinations(); const auto & current_pair:pairs) {
 
-		auto ppcf_function = calculate_ppcf(dr, current_pair);
-		std::vector<double>gr_values;
+		auto gr_values = calculate_gr(dr, current_pair);
 
 		//először kell r is, de utána redundáns lenne
 		if (result.empty()) {
-			std::vector<double>r_values(ppcf_function.size());
-			std::transform(ppcf_function.begin(), ppcf_function.end(), r_values.begin(), [](const ppcf_values a) {
-				return a.r;
-				});
-			std::transform(ppcf_function.begin(), ppcf_function.end(), gr_values.begin(), [](const ppcf_values a) {
-				return a.gr;
-				});
+			auto r_values = linspace(0, r_max_, static_cast<int>(r_max_ / dr)+1);
+			result.push_back(r_values);
+			result.push_back(gr_values);
 		}
-		std::transform(ppcf_function.begin(), ppcf_function.end(), gr_values.begin(), [](const ppcf_values a) {
-			return a.gr;
-			});
-		result.push_back(gr_values);
+		else {
+			result.push_back(gr_values);
+		}
 	}
 	return result;
 }
@@ -105,4 +101,19 @@ std::vector<atom_name_pair> box::ppcf_combinations() {
 	}
 
 	return combs;
+}
+
+
+std::vector<double> box::linspace(const double start, const double end, const int num_points) {
+	std::vector<double> sequence;
+	sequence.reserve(num_points);
+
+	const double step_size = (end - start) / (num_points - 1);
+	double value = start;
+
+	for (int i = 0; i < num_points; ++i) {
+		sequence.push_back(value);
+		value += step_size;
+	}
+	return sequence;
 }
