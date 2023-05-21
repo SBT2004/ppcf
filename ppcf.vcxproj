@@ -100,7 +100,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
@@ -130,13 +130,21 @@
   <ItemGroup>
     <ClInclude Include="atom.h" />
     <ClInclude Include="box.h" />
+    <ClInclude Include="box_reader.h" />
+    <ClInclude Include="config_reader.h" />
     <ClInclude Include="control_panel.h" />
+    <ClInclude Include="dimensions.h" />
+    <ClInclude Include="atom_name_pair.h" />
+    <ClInclude Include="string_utils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="atom.cpp" />
     <ClCompile Include="box.cpp" />
+    <ClCompile Include="box_reader.cpp" />
+    <ClCompile Include="config_reader.cpp" />
     <ClCompile Include="control_panel.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="atom_name_pair.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

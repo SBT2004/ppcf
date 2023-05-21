@@ -1,63 +1,94 @@
 ﻿#include "control_panel.h"
-void analyis_config::read_cfg_file() {
-	//std::regex reg_path(R"(^\s*path\s*=\s*\b([\w\\.-:]+)\b\s*$)");
-	//std::regex reg_prefix(R"(^\s*prefix\s*=\s*\b([\w]+)\b\s*$)");
-	//std::regex reg_from_to(R"(^\s*from-to\s*=\s*([\d]+)\s*([\d]+)\s*$)");
-	//std::regex reg_dr(R"(^\s*dr\s*=\s*([\d].*[\d]+)\s*$)");
-	//std::regex reg_output_name(R"(^\s*output\s*name\s*=\s*\b([\w]+)\b\s*$)");
-	//std::regex reg_increment(R"(^\s*increment\s*=\s*([\d]+)\s*$)");
 
-	std::ifstream file("config.txt");
-	if (file.is_open()) {
-		std::string line;
-		//beolvassuk soronként a config fájlt és feltöltjük a config osztály mezőit, ha sikerül
-		while (std::getline(file, line)) {
-			std::smatch matches;
+#include <iostream>
 
-			if (std::regex_match(line, matches, std::regex(R"(^\s*path\s*=\s*(\S+)\s*$)"))) {
-				path = matches[1].str();
-				path_modified = true;
-			}
-			else if (std::regex_match(line, matches, std::regex(R"(^\s*prefix\s*=\s*(\S+)\s*$)"))) {
-				prefix = matches[1].str();
-				prefix_modified = true;
-			}
+#include "config_reader.h"
+#include "string_utils.h"
 
-			//to és from szét van szedve, először to van kezelve, majd from
-			//ha to nem szám hanem end, akkor annak külön esete van, ekkor az utolsó fájlig megyünk
-			else if (std::regex_match(line, matches, std::regex(R"(^\s*from-to\s*=.*$)"))) {
-				if (std::regex_match(line, matches, std::regex(R"(^\s*from-to\s*=\s*([\d]+).*$)"))) {
-					from = std::stoi(matches[1].str());
-					from_modified = true;
-				}
-				else if (std::regex_match(line, matches, std::regex(R"(^\s*from-to\s*=\s*[\d]+\s*([\d]+)\s*$)"))) {
-					to = std::stoi(matches[1].str());
-					to_modified = true;
-				}
-				else if (std::regex_match(line, matches, std::regex(R"(^\s*from-to\s*=\s*[\d]+\s*end\s*$)"))) {
-					//to-nak kéne valami temp érték, ami jelzi hogy end flag van.
-					to = end;
-					to_modified = true;
-					to_end_flag = true;
-				}
+config_reader control_panel::generate_configuration() const {
 
-			}
-			else if (std::regex_match(line, matches, std::regex(R"(^\s*dr\s*=\s*(\d+(?:\.\d+)?)\s*$)"))) {
-				dr = std::stod(matches[1].str());
-				dr_modified = true;
-			}
-			else if (std::regex_match(line, matches, std::regex(R"(^\s*output\s*name\s*=\s*(\S+)\s*$)"))) {
-				output_file_name = matches[1].str();
-				increment_modified = true;
-			}
-			else if (std::regex_match(line, matches, std::regex(R"(^\s*increment\s*=\s*(\d+)\s*$)"))) {
-				increment = std::stoi(matches[1].str());
-				output_name_modified = true;
-			}
-			file.close();
+	config_reader conf;
+
+	if (!conf.prefix_modified) {
+		read_prefix_from_user(conf);
+	}
+	if (!conf.path_from_config) {
+		read_path_from_user(conf);
+	}
+	if (!conf.from_modified) {
+		read_from_to_from_user(conf);
+	}
+	if (!conf.dr_modified) {
+		read_dr_from_user(conf);
+	}
+	if (!conf.path_from_config) {
+		read_output_name_from_user(conf);
+	}
+	//a felhaszálónak nem kell tudnia, hogy hány fájl van, a program számolja meg
+	conf.number_of_files = count_files(conf);
+	
+	return conf;
+}
+size_t control_panel::count_files(config_reader conf) const {
+	size_t file_count = 0;
+	for (const auto& file : std::filesystem::directory_iterator(conf.path)) {
+		if (is_regular_file(file)) {
+			file_count++;
 		}
 	}
-	else {
-		throw std::invalid_argument("Failed to open config file");
+	return file_count;
+}
+
+void control_panel::read_from_to_from_user(config_reader& conf) const {
+	std::string input;
+	std::cout << "Enter from to values: ";
+	std::getline(std::cin, input);
+
+	std::string from, to;
+	size_t pos = input.find(' ');
+	from = input.substr(0, pos);
+	to = input.substr(pos);
+
+	if (is_integer(from)) {
+		conf.from = to_integer(from);
 	}
+
+	if (is_integer(to)) {
+		conf.to = to_integer(to);
+	}
+
+	else if (is_end_flag(to)) {}
+}
+
+void control_panel::read_dr_from_user(config_reader& conf) {
+	char ans;
+	std::cout << "No dr value was provided, use default value? y/n?";
+	std::cin >> ans;
+	if (ans == 'n') {
+		double dr;
+		std::cout << "Specify the step size dr";
+		std::cin >> dr;
+		conf.dr = dr;
+	}
+}
+
+void control_panel::read_path_from_user(config_reader& conf) {
+	std::cout << "Specify the path of the files";
+	std::string path;
+	std::cin >> path;
+	conf.path = path;
+}
+
+void control_panel::read_prefix_from_user(config_reader& conf) {
+	std::cout << "Specify the prefix of the files";
+	std::string prefix;
+	std::cin >> prefix;
+	conf.prefix = prefix;
+}
+
+void control_panel::read_output_name_from_user(config_reader& conf) {
+	std::string output_file_name;
+	std::cout << "Specify the name of the output file";
+	std::cin >> output_file_name;
+	conf.output_file_name = output_file_name;
 }

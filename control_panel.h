@@ -1,103 +1,71 @@
 ﻿#pragma once
 #include <filesystem>
-#include <iostream>
 #include <string>
 #include <regex>
 #include "box.h"
-// a config file tartalma
-enum { end };
-class analyis_config {
-public:
-	std::string path;
-	size_t number_of_files = 0;
-	std::string prefix;
-	//ide majd lesz egy end enum/logikai érték
-	size_t from = 0, to = INT_MAX;
-	double dr = 0.01;
-	size_t increment = 1;
-	std::string output_file_name = "output";
-
-	//ha read_cfg beolvassa az értéket, akkor truek lesznek
-	bool path_modified = false;
-	bool prefix_modified = false;
-	bool from_modified = false;
-	bool to_modified = false;
-	bool dr_modified = false;
-	bool increment_modified = false;
-	bool output_name_modified = false;
-	//ez akkor lesz true, ha a configban to értéknek end van megadva
-	bool to_end_flag = false;
-
-
-	analyis_config() { read_cfg_file(); }
-
-	void read_cfg_file();
-
-};
+#include "box_reader.h"
+#include "config_reader.h"
 
 class control_panel
 {
+
 	//amit sikerül beolvasni a config.txt-ből felhasználja, a többit bekéri runtime
-	//ha nem sikerült beolvasni rákérdez, hogy használja-e a default value-t, amit ki is ír hogy mi az
-	analyis_config generate_configuration() {
+	//ha nem sikerült beolvasni rákérdez, hogy használja-e a default value-t, amit ki is írja hogy mi az
+	config_reader generate_configuration() const;
+
+	//generate_configuration() segédfüggvényei
+	size_t count_files(config_reader conf) const;
+	void read_from_to_from_user(config_reader& conf) const;
+	static void read_dr_from_user(config_reader& conf);
+	static void read_path_from_user(config_reader& conf);
+	static void read_prefix_from_user(config_reader& conf);
+	static void read_output_name_from_user(config_reader& conf);
+
+	//
+	void initiate_analysis(const config_reader& conf) const {
 		namespace fs = std::filesystem;
 
-		analyis_config conf;
+		bool first = true;
+		std::vector<std::vector<double>> ppcf;
 
-		if (!conf.prefix_modified) {
-			std::cout << "Specify the prefix of the files";
-			std::string prefix;
-			std::cin >> prefix;
-			conf.prefix = prefix;
-		}
-		if (!conf.path_modified) {
-			std::cout << "Specify the path of the files";
-			std::string path;
-			std::cin >> path;
-			conf.path = path;
-		}
+		//TODO ez így már nem megy túl, ugye?
+		int files_analysed = 0;
+		for (const auto& entry : fs::directory_iterator(conf.path)) {
+			if (entry.is_regular_file()) {
+				std::ifstream file(entry.path());
 
-		//ezt nem kérjük be
-		size_t file_count = 0;
-		for (const auto& file : fs::directory_iterator(conf.path)) {
-			if (is_regular_file(file)) {
-				file_count++;
+				box_reader reader(entry.path().string());
+				auto b = reader.read_from_file();
+
+				std::vector<std::vector<double>>ppcf_from_single_file = b.ppcf_matrix(conf.dr);
+				if (first) {
+					first = false;
+					ppcf = ppcf_from_single_file;
+					files_analysed++;
+				}
+				else {
+					std::transform(ppcf.begin(), ppcf.end(), ppcf_from_single_file.begin(), ppcf.begin(),
+						[](std::vector<double>& col1, const std::vector<double>& col2) {
+							std::vector<double> sum(col1.size());
+							std::transform(col1.begin(), col1.end(), col2.begin(), col1.begin(),
+								[](const double x, const double y) { return x + y; });
+							return col2;
+						}
+					);
+					files_analysed++;
+				}
 			}
 		}
-		conf.number_of_files = file_count;
 
-		//TODO itt egybe kéne from-to beolvasás cinről
-		if (!conf.from_modified) {
-			size_t from;
-			std::cout << "Specify which files to analyze";
-			std::cin >> conf.from;
-		}
+		std::transform(ppcf.begin(), ppcf.end(), ppcf.begin(), [files_analysed](std::vector<double>& col) {
+			std::transform(col.begin(), col.end(), col.begin(), [files_analysed](double val) {
+				return val /= files_analysed;
+				});
+			return col;
+			});
 
-		if (!conf.dr_modified) {
-			double dr;
-			std::cout << "Specify the step size dr";
-			std::cin >> dr;
-			conf.dr = dr;
-		}
-
-		if (!conf.path_modified) {
-			std::string output_file_name;
-			std::cout << "Specify the name of the output file";
-			std::cin >> output_file_name;
-			conf.output_file_name = output_file_name;
-		}
-		return conf;
-	}
-
-	void initiate_analysis(const analyis_config& conf) const {
-		//TODO nem 1 increment esetén ne menjen túl
-		for (size_t i = conf.from; i <= conf.to; i += conf.increment) {
-			auto output_name = conf.output_file_name;
-			output_name += std::to_string(i);
-			output_name += ".pdb";
-			auto b1 = box(output_name);
-			std::vector<std::vector<double>>ppcf = b1.ppcf_matrix(conf.dr);
-		}
+		auto output_name = conf.output_file_name;
+		output_name += ".pdb";
 	}
 
 };
