@@ -8,7 +8,7 @@ class control_panel
 {
 
 	//amit sikerül beolvasni a config.txt-ből felhasználja, a többit bekéri runtime
-	//ha nem sikerült beolvasni rákérdez, hogy használja-e a default value-t, amit ki is írja hogy mi az
+	//ha nem sikerült beolvasni rákérdez, hogy használja-e a default value-t, amit kiír, hogy micsoda
 	config_reader generate_configuration() const;
 
 	//generate_configuration() segédfüggvényei

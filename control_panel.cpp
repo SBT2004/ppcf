@@ -97,16 +97,18 @@ std::vector<std::vector<double>> control_panel::calculate_average_ppcf(const con
 
 	bool first = true;
 	std::vector<std::vector<double>> ppcf;
-	const size_t max_files_to_be_analysed = (conf.to - conf.from + 1)/conf.increment;
+	const size_t max_files_to_be_analysed = (conf.to - conf.from + 1) / conf.increment;
+
 
 	size_t files_analysed = 0;
 	auto it = fs::directory_iterator(conf.path);
-	while (it != fs::directory_iterator()&& files_analysed < max_files_to_be_analysed) {
+	while (it != fs::directory_iterator() && files_analysed < max_files_to_be_analysed) {
 		auto& entry = *it;
 		box_reader reader(entry.path());
 		auto b = reader.read_from_file();
 
 		std::vector<std::vector<double>>ppcf_from_single_file = b.ppcf_matrix(conf.dr);
+
 		if (first) {
 			first = false;
 			ppcf = ppcf_from_single_file;
@@ -127,7 +129,7 @@ std::vector<std::vector<double>> control_panel::calculate_average_ppcf(const con
 	}
 	for (auto& i : ppcf) {
 		for (double& j : i) {
-			j /= files_analysed;
+			j /= static_cast<double>(files_analysed);
 		}
 	}
 	return ppcf;
@@ -136,7 +138,6 @@ std::vector<std::vector<double>> control_panel::calculate_average_ppcf(const con
 void control_panel::initiate_analysis() const {
 	const config_reader& conf = generate_configuration();
 	const std::vector<std::vector<double>>ppcf = calculate_average_ppcf(conf);
-
 	auto output_name = conf.output_file_name;
 	output_name += ".pdb";
 	std::ofstream output_file(output_name);

@@ -1,7 +1,5 @@
 ﻿#include "box.h"
-
 #include <algorithm>
-#include <iostream>
 
 std::vector<double> box::get_distances(const atom& a, const std::string& type2) {
 	std::vector<double> distances;
@@ -10,15 +8,16 @@ std::vector<double> box::get_distances(const atom& a, const std::string& type2) 
 	//végigiterálunk a type2 keyyel rendelkező vektoron
 	for (const auto& i : atoms_[type2])
 	{
-		distances.push_back(a.distance(i, dim_.x));
+		auto dist = a.distance(i, dim_.x);
+		distances.push_back(dist);
 	}
+
 	//fontos, hogy be legyen rendezve, mert a lower_bound és upper_bound csak rendezett vektoron működik
-	std::sort(distances.begin(), distances.end());
+	std::ranges::sort(distances);
 	return distances;
 }
 
 std::vector<double> box::calculate_gr_single_atom(const atom& a, double const dr, const std::string& type2) {
-
 	auto distances = get_distances(a, type2);
 	std::vector<double>res;
 	const double average_number_density = static_cast<double>(atoms_[type2].size()) / box_volume_;
@@ -26,8 +25,9 @@ std::vector<double> box::calculate_gr_single_atom(const atom& a, double const dr
 		double gr;
 
 		//distances rendezve tárolja center távolságokat
-		const auto lower = std::lower_bound(distances.begin(), distances.end(), r);
-		const auto upper = std::upper_bound(distances.begin(), distances.end(), r + dr);
+		const auto lower = std::ranges::lower_bound(distances, r);
+		const auto upper = std::ranges::upper_bound(distances, r + dr);
+
 		const size_t count = std::distance(lower, upper);
 
 		const double dV = volume(r + dr) - volume(r);
@@ -39,21 +39,24 @@ std::vector<double> box::calculate_gr_single_atom(const atom& a, double const dr
 }
 
 std::vector<double> box::calculate_gr(double const dr, const atom_name_pair& pair) {
-	const std::vector<atom>refs = atoms_[pair.reference];
+	const std::vector<atom>&refs = atoms_[pair.reference];
 	std::vector<double> average_gr;
 	bool first = true;
 	for (const atom& i : refs) {
 		std::vector<double>atom_ppcf = calculate_gr_single_atom(i, dr, pair.reference);
-		if(first) {
+		if (first) {
 			average_gr = atom_ppcf;
 			first = false;
 		}
-		std::transform(average_gr.begin(), average_gr.end(),
-			atom_ppcf.begin(), average_gr.begin(), [](const double a, const double b) {
-				return a + b;
-			});
+		else {
+			std::transform(average_gr.begin(), average_gr.end(),
+				atom_ppcf.begin(), average_gr.begin(), [](const double a, const double b) {
+					return a + b;
+				});
+		}
+
 	}
-	std::transform(average_gr.begin(), average_gr.end(), average_gr.begin(), [&refs](double a) {
+	std::ranges::transform(average_gr, average_gr.begin(), [&refs](double a) {
 		return a /= static_cast<double>(refs.size());
 		});
 	return average_gr;
@@ -68,7 +71,7 @@ std::vector<std::vector<double>> box::ppcf_matrix(const double dr) {
 
 		//először kell r is, de utána redundáns lenne
 		if (result.empty()) {
-			auto r_values = linspace(0, r_max_, static_cast<int>(r_max_ / dr)+1);
+			auto r_values = linspace(0, r_max_, static_cast<int>(r_max_ / dr) + 1);
 			result.push_back(r_values);
 			result.push_back(gr_values);
 		}
