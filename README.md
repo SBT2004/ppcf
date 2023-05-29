@@ -4,3 +4,7 @@ A program kap n db konfigurációt, amelyeknek egyesével kiszámítja a parciá
 Az atom egy osztályba vannak foglalva, amely tárolja az x y z koordinátáikat, valamint az atom típusát. Az atomok vagy egy tömbbe vagy egy dobozba lesznek tárolva, attól függően, hogy szükséges-e a doboz absztrakció. Az egyes atomok a fájlokban 1-1 sort foglalnak el, a << operátor fogja őket beolvasni és az hívja a constructort. A beolvasott fájloknak lesz fejléce is, ezeket először le kell szedni.
 A kiszámított r - gr értékeket szintén tárolódhatnak saját osztályban, amellyel szintén << operátorral ki lehet őket íratni fájlba. Ez az osztály tartalmazna r-t: az aktuális bin (r+dr - r intervallum) közepét, valamint a parciális gr-eket pl. víz esetén grHH grHO(OH ugyanaz) grOO
 A feladatban a nehézség nem az implemntáció, hanem a hatékonyság, létezik már gyári verzió is, ha az nagyságrendekkel gyorsabb, akkor a kód értelmét veszti.
+
+Felhasznált könyvtárak:
+https://github.com/PCRE2Project/pcre2/releases
+
