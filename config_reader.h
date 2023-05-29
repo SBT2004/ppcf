@@ -1,28 +1,10 @@
-#pragma once
+Ôªø#pragma once
 #include <regex>
-#include <string>
+#include "config.h"
 
 class config_reader {
-public:
-	std::string path;
-	size_t number_of_files = 0;
-	std::string prefix;
-	size_t from = 0, to = INT_MAX;
-	double dr = 0.01;
-	size_t increment = 1;
-	std::string output_file_name = "output";
-	std::string line;
-
-	//ha read_cfg beolvassa az ÈrtÈket, akkor truek lesznek
-	bool path_from_config = false;
-	bool prefix_modified = false;
-	bool from_modified = false;
-	bool to_modified = false;
-	bool dr_modified = false;
-	bool increment_modified = false;
-	bool output_name_modified = false;
-
-	//regexek a config f·jl beolvas·s·hoz
+private:
+	//a config f√°jl mindegyik sor√°nak megfelel≈ë regex, config f√°jl beolvas√°s√°hoz
 	std::regex path_regex = std::regex(R"(^\s*path\s*=\s*(\S+)\s*$)");
 	std::regex prefix_regex = std::regex(R"(^\s*prefix\s*=\s*(\S+)\s*$)");
 	std::regex from_to_regex = std::regex(R"(^\s*from-to\s*=.*$)");
@@ -32,17 +14,17 @@ public:
 	std::regex output_file_regex = std::regex(R"(^\s*output\s*name\s*=\s*(\S+)\s*$)");
 	std::regex increment_regex = std::regex(R"(^\s*increment\s*=\s*(\d+)\s*$)");
 
-	config_reader() { read_cfg_file(); }
+	//seg√©df√ºggv√©nyei a read_cfg_file-nak
+	void try_parse_path(config& conf) const;
+	void try_parse_prefix(config& conf) const;
+	void try_parse_from_to(config& conf) const;
+	void try_parse_dr(config& conf) const;
+	void try_parse_increment(config& conf) const;
+	void try_parse_output_name(config& conf) const;
 
-	//megprÛb·lja beolvasni a config f·jlbÛl a be·llÌt·sokat, a ctor ezt hÌvja meg
-	void read_cfg_file();
+public:
+	config_reader() = default;
 
-	//segÈdf¸ggvenyei a read_cfg_file-nak
-	void try_parse_path();
-	void try_parse_prefix();
-	void try_parse_from_to();
-	void try_parse_dr();
-	void try_parse_increment();
-	void try_parse_output_name();
+	//megpr√≥b√°lja beolvasni a config f√°jlb√≥l a be√°ll√≠t√°sokat, √©s felt√∂lteni a config structot
+	config read_cfg_file() const;
 };
-

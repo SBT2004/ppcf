@@ -1,8 +1,10 @@
 #pragma once
 
+/**
+ * \brief Eltároja egy atom koordinátáit Angström-ben
+ */
 class atom
 {
-	//eltárojuk a típusát és a koordinátáit Angström-ben
 	double x_;
 	double y_;
 	double z_;

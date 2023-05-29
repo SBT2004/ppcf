@@ -1,4 +1,4 @@
-#include "box_reader.h"
+﻿#include "box_reader.h"
 
 #include <regex>
 #include <stdexcept>
@@ -18,24 +18,25 @@ box box_reader::read_from_file() const {
 	//CRYST1   22.758   22.758   22.758  90.00  90.00  90.00 P 1           1
 	std::regex reg_dim(R"(^\w+\s+(\d*\.\d+)\s+(\d*\.\d+)\s+(\d*\.\d+))");
 
-	std::ifstream file(path_);
-
-	if (file.is_open()) {
+	if (std::ifstream file(path_); file.is_open()) {
 		std::unordered_map<std::string, std::vector<atom>> atoms;
 		size_t time = INT_MAX;
 		size_t frame_number = INT_MAX;
-		dimensions dim;
+		dimensions dim {};
 
 		std::string line;
 		std::smatch matches;
 		while (std::getline(file, line)) {
+			//atomok, ebből van sok sornyi, ezért az elején van, hogy ne értékelje ki a többit feleslegesen
 			if (std::regex_search(line, matches, reg_atom)) {
 				atoms[std::string(matches[1])].push_back(atom(stod(matches[2]), stod(matches[3]), stod(matches[4])));
 			}
+			//frame és time
 			else if (std::regex_search(line, matches, reg_frame)) {
 				time = std::stoi(matches[1]);
 				frame_number = std::stoi(matches[2]);
 			}
+			//dimenziók
 			else if (std::regex_search(line, matches, reg_dim)) {
 				dim = dimensions(stod(matches[1]), stod(matches[2]), stod(matches[3]));
 			}
@@ -45,6 +46,7 @@ box box_reader::read_from_file() const {
 		if (atoms.empty() || time == INT_MAX || frame_number == INT_MAX) {
 			throw std::invalid_argument("Invalid file content");
 		}
+
 		return box(atoms, dim, time, frame_number);
 	}
 
