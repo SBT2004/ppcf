@@ -141,7 +141,6 @@ void control_panel::initiate_analysis() const {
 	auto output_name = conf.output_file_name;
 	output_name += ".pdb";
 	std::ofstream output_file(output_name);
-	//TODO: kell neki valamiért az iostream
 	output_file << ppcf;
 }
 
