@@ -2,13 +2,13 @@
 #include <string>
 
 //ppcf_value_pair számításhoz egy központi atomot és egy referencia atomot tároló struct
-	struct atom_name_pair {
-		std::string center;
-		std::string reference;
+struct atom_name_pair {
+	std::string center;
+	std::string reference;
 
-		atom_name_pair(std::string str_a, std::string str_b) : center(std::move(str_a)), reference(std::move(str_b)) {}
+	atom_name_pair(std::string str_a, std::string str_b) : center(std::move(str_a)), reference(std::move(str_b)) {}
 
-		//ha egy pár sorrendtől függtetlenül megegyezik true, pl. AB=BA
-		bool operator==(const atom_name_pair& other) const;
-	};
+	//ha egy pár sorrendtől függtetlenül megegyezik true, pl. AB=BA
+	bool operator==(const atom_name_pair& other) const;
+};
 

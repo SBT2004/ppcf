@@ -1,6 +1,6 @@
         path = D:\MD\ppcf_frame_test
 	prefix = test
-	from-to = 0 50
+from-to = 0 50
 	dr = 0.1
-	output name = output_test1
+	output name = output
 	increment = 1

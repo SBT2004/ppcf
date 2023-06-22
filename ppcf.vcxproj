@@ -138,6 +138,7 @@
     <ClInclude Include="atom.h" />
     <ClInclude Include="box.h" />
     <ClInclude Include="box_reader.h" />
+    <ClInclude Include="config.h" />
     <ClInclude Include="config_reader.h" />
     <ClInclude Include="control_panel.h" />
     <ClInclude Include="dimensions.h" />
