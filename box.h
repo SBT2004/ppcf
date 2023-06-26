@@ -23,14 +23,14 @@ private:
 	dimensions dim_;
 
 	//itt kihasználtuk, hogy a doboz kocka alakú, így a sugarát bármelyik kiterjedés felének vehetjük
-	const double r_max_ = dim_.x / 2;
+	const double r_max_ = dim_.x*sqrt(3)/ 2;
 
 	//a doboz térfogata
-	double box_volume_ = dim_.x * dim_.y * dim_.z * _4PI_PER3_;
+	double box_volume_ = dim_.x * dim_.y * dim_.z;
 
 	//kiszámolja egy atomhoz tartozó reference_atom_name nevű atomok távolságát
 	//és visszaadja egy rendezett vektorként
-	std::vector<double> get_distances(const atom& central_atom, const std::string& reference_atom_name);
+	std::vector<size_t> get_distances(const atom& central_atom, const std::string& reference_atom_name, const double dr);
 
 	//kiszámolja egy atomhoz tartozó reference_atom_name nevű atomok relatív gyakoriságát
 	std::vector<double> calculate_gr_single_atom(const atom& central_atom, double dr, const std::string& reference_atom_name);
@@ -48,13 +48,13 @@ private:
 	//megnézi, hogy egy adott atomnév-pár már szerepel-e a vektorban, sorrendtől függetlenül
 	static bool is_unique_pair(const std::vector<atom_name_pair>& pairs, const atom_name_pair& pair);
 
-	//számtani sorozatot hoz létre, start és end között num_points darab pontban
-	static std::vector<double> linspace(double start, double end, int num_points);
+	//creates an artihmetic sequence with a start and endpoint and dq difference
+	static std::vector<double> linspace(double start, size_t length, double increment);
 
 public:
 
 	box(std::unordered_map<std::string, std::vector<atom>> atoms, const dimensions& dimensions, const size_t time,
-	    const size_t frame_number) : atoms_(std::move(atoms)), time_(time), frame_number_(frame_number), dim_(dimensions) { }
+		const size_t frame_number) : atoms_(std::move(atoms)), time_(time), frame_number_(frame_number), dim_(dimensions) { }
 
 	//Meghívja a ppcf értékeket kiszámító függvényeket minden érvényes párra,
 	//majd ezeket összerakja egy mátrixba,

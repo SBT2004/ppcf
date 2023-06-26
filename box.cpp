@@ -1,51 +1,37 @@
 ﻿#include "box.h"
 #include <algorithm>
 
-std::vector<double> box::get_distances(const atom& central_atom, const std::string& reference_atom_name) {
-	std::vector<double> distances;
+std::vector<size_t> box::get_distances(const atom& central_atom,
+	const std::string& reference_atom_name,const double dr) {
+	const size_t number_of_bins = static_cast<size_t>(r_max_ / dr) + 1;
 
-	//telítmény optimalizálás, hogy ne kelljen növelgetni memóriát
-	distances.reserve(atoms_[reference_atom_name].size());
+	//the number of atoms in a bin will be stored in this vector
+	std::vector<size_t> distances(number_of_bins);
 
-	//végigiterálunk a reference_atom_name key-jel rendelkező vektoron
-	for (const auto& i : atoms_[reference_atom_name]) {
-		auto distance = central_atom.distance(i, dim_.x);
-		distances.push_back(distance);
+	//the atom can't recognise itself, it must be subtracted from the first bin
+	distances[0]=-1;
+	//sort the atom distances into bins, only the number of atoms in the bins are stored
+	for (const auto& ref : atoms_[reference_atom_name]) {
+		const double distance = central_atom.distance(ref, dim_.x);
+		const int i = static_cast<int>(distance / dr);
+		distances[i]++;
 	}
-
-	//fontos, hogy be legyen rendezve, mert a lower_bound és upper_bound csak rendezett vektoron működik
-	std::ranges::sort(distances);
-
 	return distances;
 }
 
 std::vector<double> box::calculate_gr_single_atom(const atom& central_atom, double const dr, const std::string& reference_atom_name) {
-	auto distances = get_distances(central_atom, reference_atom_name);
-	std::vector<double>res;
+	const std::vector<size_t> distances = get_distances(central_atom, reference_atom_name, dr);
 	const double average_number_density = static_cast<double>(atoms_[reference_atom_name].size()) / box_volume_;
 
-	for (double r = 0; r < r_max_; r += dr) {
-		double gr;
+	const size_t number_of_bins = static_cast<size_t>(r_max_ / dr) + 1;
+	std::vector<double>r_gr_function(number_of_bins);
 
-		//distances rendezve tárolja center távolságokat
-		std::vector<double>::iterator up;
-
-		const auto lower = std::ranges::lower_bound(distances, r);
-		for (auto it = lower; it != distances.end(); ++it) {
-			if (*it >= r + dr) {
-				up = it;
-				break;
-			}
-		}
-
-		const size_t counts = std::distance(lower, up);
-
-		const double dV = volume(r + dr) - volume(r);
-
-		gr = (static_cast<double>(counts) / dV) / average_number_density;
-		res.push_back(gr);
+	for (size_t bin = 0; bin < number_of_bins; bin++) {
+		const double dV = volume(static_cast<double>(bin + 1) * dr) - volume(static_cast<double>(bin) * dr);
+		const double gr = static_cast<double>(distances[bin]) / dV / average_number_density;
+		r_gr_function[bin]=gr;
 	}
-	return res;
+	return r_gr_function;
 }
 
 std::vector<double> box::calculate_gr(double const dr, const atom_name_pair& pair) {
@@ -85,7 +71,8 @@ std::vector<std::vector<double>> box::ppcf_matrix(const double dr) {
 		//Először kell r is, de utána redundáns lenne,
 		//minden gr-hez ugyanaz az r tartozik.
 		if (result.empty()) {
-			auto r_values = linspace(0, r_max_, static_cast<int>(r_max_ / dr) + 1);
+			const size_t length = static_cast<size_t>(r_max_ / dr)+1;
+			auto r_values = linspace(dr/2, length, dr);
 			result.push_back(r_values);
 			result.push_back(gr_values);
 		}
@@ -129,17 +116,10 @@ std::vector<atom_name_pair> box::ppcf_combinations() {
 	return combs;
 }
 
-std::vector<double> box::linspace(const double start, const double end, const int num_points) {
-	std::vector<double> sequence;
-	sequence.reserve(num_points);
-
-	const double step_size = (end - start) / (num_points - 1.0);
-	double value = start;
-
-	for (int i = 0; i < num_points; ++i) {
-		sequence.push_back(value);
-		value += step_size;
+std::vector<double> box::linspace(const double start, const size_t length, const double increment) {
+	std::vector<double>sequence(length);
+	for (size_t i =0;i<length;i++) {
+		sequence[i]=start+i*increment; 
 	}
-
 	return sequence;
 }

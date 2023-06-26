@@ -126,8 +126,8 @@ std::vector<std::vector<double>> control_panel::calculate_average_ppcf(const con
 			files_analysed++;
 		}
 		else {
-			//összegezzük a gr értékeket az átlagoláshoz
-			for (size_t i = 0; i < ppcf.size(); i++) {
+			//summing GR values for averaging
+			for (size_t i = 1; i < ppcf.size(); i++) {
 				for (size_t j = 0; j < std::min(ppcf[i].size(), ppcf_from_single_file[i].size()); j++) {
 					ppcf[i][j] += ppcf_from_single_file[i][j];
 				}
@@ -137,9 +137,9 @@ std::vector<std::vector<double>> control_panel::calculate_average_ppcf(const con
 		std::advance(it, conf.increment);
 	}
 
-	//átlagolás
-	for (auto& i : ppcf) {
-		for (double& j : i) {
+	//averaging the GR values, while skipping the r column
+	for (auto column = std::next(ppcf.begin()); column != ppcf.end(); ++column) {
+		for (double& j : *column) {
 			j /= static_cast<double>(files_analysed);
 		}
 	}
